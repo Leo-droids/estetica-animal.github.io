@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Estética Animal — Agenda & Financeiro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --rosa:#ff66a3;
+    --rosa-escuro:#ff3385;
+    --bg:#fff0f6;
+    --card:#ffffff;
+    --texto:#444;
+    --sombra:0 4px 8px rgba(255,102,163,.3);
+    --azul:#007bff;
+    --verde:#28a745;
+    --cinza:#d6d6d6;
+  }
+  *{box-sizing:border-box}
+  body{font-family:Arial,Helvetica,sans-serif; background:var(--bg); color:var(--texto); margin:0;}
+  
+  header{position:fixed; top:0; left:0; right:0; background:var(--rosa); color:#fff; z-index:1000; box-shadow:var(--sombra);}
+  .header-inner{max-width:1200px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; justify-content:space-between;}
+  header h1{margin:0; font-size:20px; display:flex; align-items:center;}
+  
+  #logoHeader{
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-right:10px;
+  }
+
+  nav a{display:inline-block; margin-left:8px; color:#fff; text-decoration:none; font-weight:bold; padding:8px 12px; border-radius:20px; transition:.2s;}
+  nav a:hover{background:#fff; color:var(--rosa)}
+  nav a.ativo{background:#fff; color:var(--rosa)}
+  
+  main{max-width:1200px; margin:86px auto 24px; padding:0 16px}
+  #agendaMain{display:flex; gap:20px; align-items:flex-start}
+  #calendario{flex:1; max-height:78vh; overflow-y:auto;}
+  .mes{background:var(--card); border-radius:14px; padding:12px; margin-bottom:20px; box-shadow:var(--sombra);}
+  .mes h2{margin:6px 0 12px; text-transform:capitalize; color:var(--rosa-escuro); text-align:center}
+  .dias-semana{display:grid; grid-template-columns:repeat(7,1fr); margin-bottom:6px; text-align:center; font-weight:bold; font-size:12px;}
+  .dias{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .dia{background:#ffe6f0; border-radius:8px; min-height:86px; padding:6px; position:relative; font-size:12px;}
+  .dia-num{font-weight:bold; opacity:.8}
+  .dia.hoje{outline:2px solid var(--rosa-escuro); background:#ffd1e3}
+  .badge{display:block; width:100%; text-align:left; border:none; border-radius:8px; color:#fff; padding:6px 8px; margin-top:6px; cursor:pointer; position:relative; font-size:12px; line-height:1.2; box-shadow:0 2px 6px rgba(0,0,0,.08);}
+  .badge.avulso{background:var(--azul)}
+  .badge.pacote{background:var(--verde)}
+  .badge.cancelado_cliente{filter:grayscale(.2); text-decoration:line-through; opacity:.8}
+  .badge.cancelado_sistema{filter:grayscale(1); opacity:.5; border:1px dashed #900}
+
+  #sidebar{width:320px; background:var(--card); border-radius:14px; padding:16px; box-shadow:var(--sombra); position:sticky; top:92px;}
+  #sidebar h3{margin-top:0; color:var(--rosa-escuro); text-align:center}
+  .field{margin-bottom:10px}
+  .field label{display:block; font-size:13px; margin-bottom:4px}
+  .field input, .field select{width:100%; padding:10px; border:2px solid var(--rosa); border-radius:10px; background:#fff;}
+  .btn{display:inline-block; width:100%; border:none; border-radius:10px; padding:10px 12px; font-weight:bold; cursor:pointer; transition:.2s; box-shadow:var(--sombra);}
+  .btn:hover{transform:translateY(-1px)}
+  .btn-avulso{background:var(--azul); color:#fff}
+  .btn-pacote{background:var(--verde); color:#fff}
+
+  #financeiroSec{display:none}
+  .cards{display:flex; gap:16px; flex-wrap:wrap}
+  .card{flex:1; min-width:220px; background:var(--card); border-radius:14px; padding:16px; text-align:center; box-shadow:var(--sombra);}
+  .card h3{margin:6px 0 10px; color:var(--rosa-escuro)}
+  table{width:100%; border-collapse:collapse; background:var(--card); border-radius:14px; overflow:hidden; box-shadow:var(--sombra); margin-top:16px;}
+  th, td{padding:10px; border-bottom:1px solid #ffe6f0; text-align:left; font-size:14px}
+  th{background:var(--rosa); color:#fff}
+  tr:nth-child(even) td{background:#fff9fc}
+  .t-actions button{margin:0 4px 4px 0}
+  .mini{padding:6px 8px; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.08)}
+  .mini.edit{background:#f0f7ff}
+
+  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:2000;}
+  .modal{width:100%; max-width:420px; background:var(--card); border-radius:14px; padding:16px; box-shadow:var(--sombra);}
+  .modal h3{margin:0 0 12px; color:var(--rosa-escuro)}
+  .modal .row{display:flex; gap:8px}
+  .modal .row .field{flex:1}
+  .modal .actions{display:flex; gap:8px; margin-top:12px}
+  .modal .close-x{position:absolute; right:14px; top:14px; background:transparent; border:none; font-size:18px; cursor:pointer; color:#888;}
+
+  #loginScreen{
+    position:fixed; inset:0; background:rgba(255,255,255,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:3000;
+  }
+  #loginScreen h2{margin-bottom:20px; color:var(--rosa-escuro);}
+  #loginScreen input{width:220px; padding:10px; margin:6px 0; border:2px solid var(--rosa); border-radius:10px;}
+  #loginScreen button{width:100%; max-width:240px; padding:10px; margin-top:12px; background:var(--rosa); color:#fff; border:none; border-radius:10px; font-weight:bold; cursor:pointer;}
+  #loginScreen #logoLogin{
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:12px;
+  }
+
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <img src="logo.png" alt="Logo" id="logoLogin">
+  <h2>Login Estética Animal</h2>
+  <input type="text" id="loginUser" placeholder="Usuário" />
+  <input type="password" id="loginPass" placeholder="Senha" />
+  <button onclick="fazerLogin()">Entrar</button>
+</div>
+
+<header>
+  <div class="header-inner">
+    <h1>
+      <img src="logo.png" alt="Logo" id="logoHeader">
+      🐾 Estética Animal
+    </h1>
+    <nav>
+      <a href="#" id="navAgenda" class="ativo" onclick="mostrarAgenda(event)">Agenda</a>
+      <a href="#" id="navFinanceiro" onclick="mostrarFinanceiro(event)">Financeiro</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section id="agendaMain">
+  <div id="calendario"></div>
+
+  <aside id="sidebar">
+    <h3>Adicionar Banho</h3>
+    <div class="field">
+      <label for="tipoBanho">Tipo</label>
+      <select id="tipoBanho">
+        <option value="avulso">Banho Avulso</option>
+        <option value="pacote">Pacote (4 semanas)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="tutor">Tutor</label>
+      <input type="text" id="tutor" placeholder="Nome do Tutor" />
+    </div>
+    <div class="field">
+      <label for="cliente">Cliente</label>
+      <input type="text" id="cliente" placeholder="Nome do Cliente" />
+    </div>
+    <div class="field">
+      <label for="dataBanho">Data</label>
+      <input type="date" id="dataBanho" />
+    </div>
+    <div class="field">
+      <label for="horario">Horário</label>
+      <input type="time" id="horario" />
+    </div>
+    <div class="field">
+      <label for="valor">Valor
+        <small style="opacity:.7;display:block">Pacote: coloque o valor TOTAL do pacote (dividiremos em 4)</small>
+      </label>
+      <input type="number" id="valor" step="0.01" min="0" placeholder="0,00" />
+    </div>
+    <button id="adicionarBtn" class="btn btn-avulso" onclick="adicionarBanho()">Adicionar</button>
+    <button class="btn btn-avulso" style="margin-top:10px" onclick="limparHistorico()">Limpar Histórico</button>
+  </aside>
+</section>
+
+<section id="financeiroSec">
+  <div class="cards">
+    <div class="card"><h3>Total do Dia</h3><div id="totalDia">R$ 0,00</div></div>
+    <div class="card"><h3>Total do Mês</h3><div id="totalMes">R$ 0,00</div></div>
+    <div class="card"><h3>Ticket Médio</h3><div id="ticketMedio">R$ 0,00</div></div>
+    <div class="card"><h3>Total de Clientes</h3><div id="totalClientes">0</div></div>
+  </div>
+
+  <h2 style="color:var(--rosa-escuro)">Banhos Registrados</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Cliente</th><th>Tutor</th><th>Data</th><th>Hora</th><th>Valor</th><th>Tipo</th><th>Status</th><th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="listaBanhos"></tbody>
+  </table>
+</section>
+
+<div id="modalBackdrop" class="modal-backdrop" onclick="fecharModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="close-x" onclick="fecharModal()">×</button>
+    <h3 id="modalTitulo">Agendamento</h3>
+    <div class="row">
+      <div class="field">
+        <label>Data</label>
+        <input type="date" id="modalData">
+      </div>
+      <div class="field">
+        <label>Hora</label>
+        <input type="time" id="modalHora">
+      </div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div class="field">
+        <label>Valor</label>
+        <input type="number" id="modalValor" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label>Tipo</label>
+        <input type="text" id="modalTipo" disabled>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:13px;opacity:.8" id="modalObs"></div>
+    <div class="actions">
+      <button class="mini edit" onclick="salvarEdicao()">💾 Salvar</button>
+      <button class="mini cancC" onclick="cancelarModal('cliente')">🚫 Cancelar (Cliente)</button>
+      <button class="mini cancS" onclick="cancelarModal('sistema')">🛑 Cancelar (Sistema)</button>
+      <button class="mini revive hidden" id="btnReativar" onclick="reativarModal()">↩️ Reativar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= LOGIN ================= */
+const usuarios = [
+  {user:'Kamilly', pass:'petshop2025'},
+  {user:'Leocir', pass:'admin'}
+];
+function fazerLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  const encontrado = usuarios.find(x=>x.user===u && x.pass===p);
+  if(encontrado){
+    document.getElementById('loginScreen').style.display='none';
+    mostrarAgenda();
+  } else {
+    alert('Usuário ou senha incorretos');
+  }
+}
+
+/* ================= BASE DE DADOS ================= */
+const LS_KEY='banhos';
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const loadBanhos=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY))||[]}catch{return[]}};
+const saveBanhos=(arr)=>localStorage.setItem(LS_KEY,JSON.stringify(arr));
+
+/* ================= AGENDA & FINANCEIRO ================= */
+function limparHistorico(){
+  if(confirm('Deseja realmente limpar todo o histórico de banhos?')){
+    localStorage.removeItem(LS_KEY);
+    renderCalendario();
+    renderFinanceiro();
+  }
+}
+function setAtivo(id){
+  document.querySelectorAll('nav a').forEach(a=>a.classList.remove('ativo'));
+  document.getElementById(id).classList.add('ativo');
+}
+function mostrarAgenda(e){
+  if(e) e.preventDefault();
+  document.getElementById('agendaMain').style.display='flex';
+  document.getElementById('financeiroSec').style.display='none';
+  setAtivo('navAgenda');
+  renderCalendario();
+}
+function mostrarFinanceiro(e){
+  if(e) e.preventDefault();
+  document.getElementById('agendaMain').style.display='none';
+  document.getElementById('financeiroSec').style.display='block';
+  setAtivo('navFinanceiro');
+  renderFinanceiro();
+}
+
+/* ================= CALENDÁRIO ================= */
+const nomesMeses=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const nomesDias=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
+let hoje = new Date();
+
+function renderCalendario(){
+  const calendario = document.getElementById('calendario');
+  calendario.innerHTML='';
+  const banhos = loadBanhos();
+
+  for(let m=0;m<=1;m++){
+    const mes = hoje.getMonth()+m;
+    const ano = hoje.getFullYear();
+    const primeiroDia = new Date(ano,mes,1);
+    const ultimoDia = new Date(ano, mes+1,0);
+    const diasMes = ultimoDia.getDate();
+    const primeiroDiaSemana = (primeiroDia.getDay()+6)%7;
+
+    const mesDiv = document.createElement('div');
+    mesDiv.classList.add('mes');
+    mesDiv.innerHTML=`<h2>${nomesMeses[mes]} ${ano}</h2>
+      <div class="dias-semana">${nomesDias.map(d=>`<div>${d}</div>`).join('')}</div>
+      <div class="dias"></div>`;
+    const diasGrid = mesDiv.querySelector('.dias');
+
+    for(let i=0;i<primeiroDiaSemana;i++){diasGrid.innerHTML+='<div class="dia"></div>'}
+
+    for(let dia=1;dia<=diasMes;dia++){
+      const dataObj = new Date(ano, mes, dia);
+      const diaDiv = document.createElement('div');
+      diaDiv.classList.add('dia');
+      if(dia===hoje.getDate() && mes===hoje.getMonth() && ano===hoje.getFullYear()) diaDiv.classList.add('hoje');
+      diaDiv.innerHTML=`<span class="dia-num">${dia}</span>`;
+
+      const banhosDia = banhos.filter(b=>{
+        const partes = b.data.split('-'); 
+        const bData = new Date(partes[0], partes[1]-1, partes[2]);
+        return bData.getDate()===dia && bData.getMonth()===mes && bData.getFullYear()===ano && b.status!=='cancelado_sistema';
+
+      });
+      banhosDia.forEach(b=>{
+        const span = document.createElement('button');
+        span.classList.add('badge',b.tipo);
+        if(b.status) span.classList.add(b.status);
+        span.textContent = b.tipo==='pacote'?`${b.cliente} [${b.seq}/4]`:`${b.cliente}`;
+        span.onclick=()=>abrirModal(b);
+        diaDiv.appendChild(span);
+      });
+
+      diasGrid.appendChild(diaDiv);
+    }
+
+    calendario.appendChild(mesDiv);
+  }
+}
+
+// ===== Adicionar Banho (Corrigido) =====
+function adicionarBanho(){
+  const tipo = document.getElementById('tipoBanho').value;
+  const tutor = document.getElementById('tutor').value.trim();
+  const cliente = document.getElementById('cliente').value.trim();
+  const data = document.getElementById('dataBanho').value;
+  const hora = document.getElementById('horario').value;
+  const valor = parseFloat(document.getElementById('valor').value) || 0;
+
+  if(!tutor || !cliente || !data){
+    alert('Preencha todos os campos!');
+    return;
+  }
+
+  const banhos = loadBanhos();
+  const idBase = uid();
+
+  const partes = data.split('-');
+  const dataObj = new Date(partes[0], partes[1]-1, partes[2]);
+
+  // Função para formatar data local em YYYY-MM-DD
+  const formatLocalDate = (d) => {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  };
+
+  if(tipo==='avulso'){
+    banhos.push({
+      id: idBase,
+      tipo,
+      tutor,
+      cliente,
+      data: formatLocalDate(dataObj),
+      hora,
+      valor,
+      status:'ativo'
+    });
+  } else if(tipo==='pacote'){
+    for(let i=0;i<4;i++){
+      const novaData = new Date(dataObj.getTime());
+      novaData.setDate(novaData.getDate() + i*7);
+      novaData.setHours(0,0,0,0); // garante o dia correto
+      const valorSemana = +(valor/4).toFixed(2);
+      banhos.push({
+        id: idBase+'-'+i,
+        tipo,
+        tutor,
+        cliente,
+        data: formatLocalDate(novaData),
+        hora,
+        valor: valorSemana,
+        status:'ativo',
+        seq: i+1
+      });
+    }
+  }
+
+  saveBanhos(banhos);
+  renderCalendario();
+  renderFinanceiro();
+
+  document.getElementById('tutor').value='';
+  document.getElementById('cliente').value='';
+  document.getElementById('dataBanho').value='';
+  document.getElementById('horario').value='';
+  document.getElementById('valor').value='';
+}
+
+
+function renderFinanceiro(){
+  const banhos = loadBanhos();
+  const hojeStr = hoje.toISOString().slice(0,10);
+  const totalDia = banhos.filter(b=>b.data===hojeStr && b.status==='ativo').reduce((a,b)=>a+b.valor,0);
+  const totalMes = banhos.filter(b=>{const d=new Date(b.data); return d.getMonth()===hoje.getMonth() && d.getFullYear()===hoje.getFullYear() && b.status==='ativo'}).reduce((a,b)=>a+b.valor,0);
+  const ticketMedio = banhos.filter(b=>b.status==='ativo').length? (banhos.filter(b=>b.status==='ativo').reduce((a,b)=>a+b.valor,0)/banhos.filter(b=>b.status==='ativo').length) : 0;
+  const totalClientes = [...new Set(banhos.filter(b=>b.status==='ativo').map(b=>b.cliente))].length;
+
+  document.getElementById('totalDia').textContent=`R$ ${totalDia.toFixed(2)}`;
+  document.getElementById('totalMes').textContent=`R$ ${totalMes.toFixed(2)}`;
+  document.getElementById('ticketMedio').textContent=`R$ ${ticketMedio.toFixed(2)}`;
+  document.getElementById('totalClientes').textContent=totalClientes;
+
+  const tbody = document.getElementById('listaBanhos');
+  tbody.innerHTML='';
+  banhos.forEach(b=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML=`<td>${b.id}</td>
+      <td>${b.cliente}</td>
+      <td>${b.tutor}</td>
+      <td>${b.data}</td>
+      <td>${b.hora}</td>
+      <td>R$ ${b.valor.toFixed(2)}</td>
+      <td>${b.tipo}</td>
+      <td>${b.status}</td>
+      <td class="t-actions">
+        <button class="mini edit" onclick="abrirModal('${b.id}')">✏️</button>
+        <button class="mini" onclick="cancelarModalTabela('${b.id}','cliente')">🚫</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// Modal e cancelamento simplificados
+let modalAtual=null;
+function abrirModal(b){ if(typeof b==='string'){ b = loadBanhos().find(x=>x.id===b) } modalAtual=b; document.getElementById('modalBackdrop').style.display='flex'; document.getElementById('modalData').value=b.data; document.getElementById('modalHora').value=b.hora; document.getElementById('modalValor').value=b.valor; document.getElementById('modalTipo').value=b.tipo; document.getElementById('btnReativar').classList.toggle('hidden', b.status==='ativo'); }
+function fecharModal(e){ if(!e || e.target===document.getElementById('modalBackdrop')){ document.getElementById('modalBackdrop').style.display='none'; modalAtual=null; } }
+function salvarEdicao(){ if(!modalAtual)return; const banhos=loadBanhos(); const b = banhos.find(x=>x.id===modalAtual.id); b.data=document.getElementById('modalData').value; b.hora=document.getElementById('modalHora').value; b.valor=parseFloat(document.getElementById('modalValor').value)||0; saveBanhos(banhos); fecharModal(); renderCalendario(); renderFinanceiro();}
+function cancelarModal(tipo){ if(!modalAtual)return; const banhos=loadBanhos(); const b=banhos.find(x=>x.id===modalAtual.id); b.status=tipo==='cliente'?'cancelado_cliente':'cancelado_sistema'; saveBanhos(banhos); fecharModal(); renderCalendario(); renderFinanceiro();}
+function cancelarModalTabela(id,tipo){ modalAtual = loadBanhos().find(x=>x.id===id); cancelarModal(tipo);}
+function reativarModal(){ if(!modalAtual)return; const banhos=loadBanhos(); const b=banhos.find(x=>x.id===modalAtual.id); b.status='ativo'; saveBanhos(banhos); fecharModal(); renderCalendario(); renderFinanceiro();}
+</script>
+
+</body>
+</html>
